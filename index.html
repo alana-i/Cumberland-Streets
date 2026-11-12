@@ -35,18 +35,19 @@ details.sub>summary{cursor:pointer;padding:.75rem 1rem;display:flex;justify-cont
 details.sub[open]>summary{border-bottom:2px solid var(--line);background:var(--soft)}
 .count{font-weight:400;color:var(--muted);white-space:nowrap}
 .count.full{color:var(--done);font-weight:700}
-.subtools{padding:.5rem 1rem;display:flex;gap:.5rem;flex-wrap:wrap}
 ul.streets{list-style:none;margin:0;padding:0 0 .5rem}
 ul.streets li{border-top:1px solid var(--line)}
 ul.streets label{display:flex;gap:.9rem;align-items:center;padding:.6rem 1rem;min-height:3rem;cursor:pointer}
 ul.streets input{width:1.6rem;height:1.6rem;flex:none;accent-color:var(--accent)}
 ul.streets input:checked+span{text-decoration:line-through;color:var(--muted)}
+.map{margin:1rem 0 0}.map iframe{display:block;width:100%;height:22rem;max-height:60vh;border:2px solid var(--line)!important;border-radius:.5rem}.map figcaption{font-size:.95rem;color:var(--muted);margin-top:.4rem}.map a{color:var(--accent);font-weight:600}
+@media print{.map iframe{display:none}}
 .hidden{display:none!important}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .note{font-size:.95rem;color:var(--muted);border-left:4px solid var(--line);padding:.25rem .75rem;margin:1rem 0}
 #msg{min-height:1.5rem;font-weight:600}
 @media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
-@media print{.panel,.tools,.subtools,.skip,.controls{display:none}details.sub{border:0;break-inside:avoid}details.sub>summary{background:none}details:not([open])>*:not(summary){display:block}ul.streets{columns:2}ul.streets li{border:0}ul.streets label{padding:.15rem 0;min-height:0}}
+@media print{.panel,.tools,.skip,.controls{display:none}details.sub{border:0;break-inside:avoid}details.sub>summary{background:none}details:not([open])>*:not(summary){display:block}ul.streets{columns:2}ul.streets li{border:0}ul.streets label{padding:.15rem 0;min-height:0}}
 </style>
 </head>
 <body>
@@ -63,20 +64,21 @@ ul.streets input:checked+span{text-decoration:line-through;color:var(--muted)}
 </div>
 <header>
  <h1>Cumberland Council street checklist</h1>
- <p class="intro">Tick each street as you finish it. No sign-up and no account. Your ticks are saved in this browser on this device.</p>
+ <p class="intro">This is a list of all the suburbs within Cumberland Council. Please tick off the streets you’ve door knocked on below. No sign-up and no account needed. Your ticks are saved in this browser on this device.</p>
+
+ <figure class="map">
+  <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d53024.83760797385!2d150.95026730395023!3d-33.83676054896957!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6b12bd536ef668dd%3A0x28ed85e1e9145483!2sCumberland%20City%20Council%2C%20NSW!5e0!3m2!1sen!2sau!4v1794472054734!5m2!1sen!2sau" title="Map showing the Cumberland City Council area, NSW" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+  <figcaption>Map of the Cumberland City Council area. <a href="https://www.google.com/maps/search/?api=1&amp;query=Cumberland+City+Council+NSW" target="_blank" rel="noopener">Open in Google Maps<span class="sr"> (opens in a new tab)</span></a></figcaption>
+ </figure>
 </header>
 <main id="main">
  <div class="tools">
   <button type="button" id="expand">Open all suburbs</button>
   <button type="button" id="collapse">Close all suburbs</button>
   <button type="button" id="save">Save progress to a file</button>
-  <button type="button" id="load">Load progress from a file</button>
-  <button type="button" id="print">Print</button>
-  <button type="button" id="reset">Clear all ticks</button>
-  <input type="file" id="file" accept="application/json,.json" class="hidden" aria-label="Choose a saved progress file">
  </div>
  <p id="msg" role="status" aria-live="polite"></p>
- <p class="note">Ticks stay on your own device and are not shared with other people. To pass progress to someone else, or move it to another device, use “Save progress to a file” and then “Load progress from a file”. Street names come from OpenStreetMap-based directories and may include streets that sit just outside Cumberland, especially near shared suburb borders.</p>
+ <p class="note">Ticks stay on your own device and are not shared with other people. To keep a copy of your progress, use “Save progress to a file”. Street names come from OpenStreetMap-based directories and may include streets that sit just outside Cumberland, especially near shared suburb borders.</p>
  <div id="list"></div>
  <p id="none" class="hidden" role="status">No streets match your search.</p>
 </main>
@@ -97,10 +99,6 @@ Object.keys(DATA).forEach(sub=>{
   const h=document.createElement("h2");h.textContent=sub;
   const c=document.createElement("span");c.className="count";
   sm.append(h,c);d.append(sm);
-  const tools=document.createElement("div");tools.className="subtools";
-  const a=document.createElement("button");a.type="button";a.textContent="Tick all in "+sub;
-  const b=document.createElement("button");b.type="button";b.textContent="Untick all in "+sub;
-  tools.append(a,b);d.append(tools);
   const ul=document.createElement("ul");ul.className="streets";
   const items=DATA[sub].map(n=>{
     const li=document.createElement("li");
@@ -117,9 +115,6 @@ Object.keys(DATA).forEach(sub=>{
     return {li,cb,n};
   });
   d.append(ul);list.append(d);
-  const setAll=v=>{if(v&&!confirm("Tick every street in "+sub+"?"))return;if(!v&&!confirm("Untick every street in "+sub+"?"))return;
-    items.forEach(i=>{i.cb.checked=v;if(v)done[keyOf(sub,i.n)]=1;else delete done[keyOf(sub,i.n)]});persist();update();say(v?"All streets in "+sub+" ticked.":"All streets in "+sub+" unticked.")};
-  a.onclick=()=>setAll(true);b.onclick=()=>setAll(false);
   subs.push({sub,d,c,items});
 });
 const total=Object.values(DATA).reduce((t,x)=>t+x.length,0);
@@ -147,26 +142,12 @@ function update(){
 q.addEventListener("input",update);hideDone.addEventListener("change",update);
 document.getElementById("expand").onclick=()=>subs.forEach(s=>s.d.open=true);
 document.getElementById("collapse").onclick=()=>subs.forEach(s=>s.d.open=false);
-document.getElementById("print").onclick=()=>window.print();
-document.getElementById("reset").onclick=()=>{if(!confirm("Clear every tick? This cannot be undone."))return;done={};subs.forEach(s=>s.items.forEach(i=>i.cb.checked=false));persist();update();say("All ticks cleared.")};
 document.getElementById("save").onclick=()=>{
   const blob=new Blob([JSON.stringify({version:1,done:Object.keys(done)},null,1)],{type:"application/json"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);
   a.download="cumberland-street-progress-"+new Date().toISOString().slice(0,10)+".json";
   document.body.append(a);a.click();a.remove();say("Progress file saved to your downloads.");
 };
-const file=document.getElementById("file");
-document.getElementById("load").onclick=()=>file.click();
-file.addEventListener("change",()=>{
-  const f=file.files[0];if(!f)return;
-  f.text().then(t=>{
-    const j=JSON.parse(t);if(!j||!Array.isArray(j.done))throw 0;
-    const valid=new Set();Object.keys(DATA).forEach(s=>DATA[s].forEach(n=>valid.add(keyOf(s,n))));
-    done={};let k=0;j.done.forEach(x=>{if(valid.has(x)){done[x]=1;k++}});
-    subs.forEach(s=>s.items.forEach(i=>i.cb.checked=!!done[keyOf(s.sub,i.n)]));
-    persist();update();say("Loaded "+k+" ticked streets from the file.");
-  }).catch(()=>say("That file could not be read as a progress file.")).finally(()=>{file.value=""});
-});
 update();
 </script>
 </body>
